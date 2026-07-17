@@ -3,12 +3,18 @@ import { COUNTRIES } from "./data/countries.js";
 const uniq = [...new Map(COUNTRIES.map((c) => [c.code, c])).values()];
 const MAX_LIVES = 3;
 const STREAK_MILESTONES = [
-  { at: 3, title: "Warming up", body: "3 in a row — you’re locked in." },
-  { at: 5, title: "On a roll", body: "5 streak. Keep the streak alive." },
-  { at: 10, title: "Double digits", body: "10 correct in a row. Proper geography brain." },
-  { at: 15, title: "Unstoppable", body: "15 streak. Most people have folded by now." },
-  { at: 20, title: "Flag machine", body: "20 streak. Absolute menace." },
-  { at: 25, title: "Cartographer", body: "25 streak. The atlas fears you." },
+  { at: 5, kind: "streak", title: "On a roll", body: "5 correct in a row. Keep it going." },
+  { at: 10, kind: "streak", title: "Double digits", body: "10 in a row. Proper geography brain." },
+  { at: 20, kind: "streak", title: "Flag machine", body: "20 streak. Absolute menace." },
+  { at: 50, kind: "streak", title: "Cartographer", body: "50 in a row. The atlas fears you." },
+];
+const SCORE_MILESTONES = [
+  { at: 10, kind: "score", title: "Getting started", body: "10 flags down. Solid start." },
+  { at: 25, kind: "score", title: "Quarter century", body: "25 correct. You’re building a real tally." },
+  { at: 50, kind: "score", title: "Half a hundred", body: "50 score. Proper quiz form." },
+  { at: 100, kind: "score", title: "Century", body: "100 correct. Most people never get here." },
+  { at: 150, kind: "score", title: "Deep cut", body: "150 score. You’re into the hard ones." },
+  { at: 200, kind: "score", title: "World tour", body: "200 correct. Nearly the whole map." },
 ];
 
 const els = {
@@ -23,6 +29,7 @@ const els = {
   restart: document.getElementById("restart"),
   prompt: document.getElementById("prompt"),
   celebrate: document.getElementById("celebrate"),
+  celebrateKicker: document.getElementById("celebrate-kicker"),
   celebrateTitle: document.getElementById("celebrate-title"),
   celebrateBody: document.getElementById("celebrate-body"),
   celebrateContinue: document.getElementById("celebrate-continue"),
@@ -43,7 +50,7 @@ const state = {
   current: null,
   answered: false,
   loadToken: 0,
-  pendingCelebrate: null,
+  celebrateQueue: [],
   skipBroken: false,
 };
 
@@ -128,10 +135,27 @@ function hideOverlays() {
 }
 
 function showCelebrate(milestone) {
-  state.pendingCelebrate = null;
+  const kicker = milestone.kind === "score" ? "Score milestone" : "Streak";
+  els.celebrateKicker.textContent = kicker;
   els.celebrateTitle.textContent = milestone.title;
-  els.celebrateBody.textContent = `${milestone.body}\n\nStreak: ${state.streak} · Score: ${state.score}`;
+  els.celebrateBody.textContent = `${milestone.body}\n\nScore: ${state.score} · Streak: ${state.streak}`;
   els.celebrate.hidden = false;
+}
+
+function queueMilestones() {
+  const scoreHit = SCORE_MILESTONES.find((m) => m.at === state.score);
+  const streakHit = STREAK_MILESTONES.find((m) => m.at === state.streak);
+  // Score first, then streak — separate screens if both fire on the same answer.
+  if (scoreHit) state.celebrateQueue.push(scoreHit);
+  if (streakHit) state.celebrateQueue.push(streakHit);
+}
+
+function drainCelebrateOrContinue() {
+  if (state.celebrateQueue.length) {
+    showCelebrate(state.celebrateQueue.shift());
+    return true;
+  }
+  return false;
 }
 
 function showGameOver() {
@@ -193,10 +217,6 @@ function renderRound() {
   updateStats();
 }
 
-function milestoneFor(streak) {
-  return STREAK_MILESTONES.find((m) => m.at === streak) || null;
-}
-
 function onChoose(btn, opt) {
   if (state.answered || state.lives <= 0) return;
   state.answered = true;
@@ -218,8 +238,7 @@ function onChoose(btn, opt) {
     state.bestStreak = Math.max(state.bestStreak, state.streak);
     els.feedback.textContent = "Nice — that’s right.";
     els.feedback.className = "feedback ok";
-    const mile = milestoneFor(state.streak);
-    if (mile) state.pendingCelebrate = mile;
+    queueMilestones();
   } else {
     btn.classList.add("wrong");
     state.streak = 0;
@@ -246,10 +265,7 @@ function goNext() {
     showGameOver();
     return;
   }
-  if (state.pendingCelebrate) {
-    showCelebrate(state.pendingCelebrate);
-    return;
-  }
+  if (drainCelebrateOrContinue()) return;
   if (!remaining().length) {
     showCleared();
     return;
@@ -262,7 +278,7 @@ function restart() {
   state.streak = 0;
   state.lives = MAX_LIVES;
   state.seen = new Set();
-  state.pendingCelebrate = null;
+  state.celebrateQueue = [];
   state.answered = false;
   state.skipBroken = false;
   hideOverlays();
@@ -274,6 +290,7 @@ els.next.addEventListener("click", goNext);
 els.restart.addEventListener("click", restart);
 els.celebrateContinue.addEventListener("click", () => {
   els.celebrate.hidden = true;
+  if (drainCelebrateOrContinue()) return;
   if (!remaining().length) {
     showCleared();
     return;
