@@ -62,7 +62,9 @@ html, body {
 
 .stats {
   display: flex;
-  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
   font-size: 0.85rem;
   color: var(--sand-dim);
   text-transform: lowercase;
@@ -73,6 +75,23 @@ html, body {
   font-weight: 600;
   color: var(--sand);
   font-variant-numeric: tabular-nums;
+}
+
+.lives {
+  letter-spacing: 0.08em;
+  color: var(--wrong);
+  font-size: 1rem;
+  text-transform: none;
+}
+
+.lives.low {
+  animation: pulse 900ms ease infinite;
+}
+
+.meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(232, 220, 196, 0.5);
 }
 
 .hero {
@@ -191,11 +210,77 @@ html, body {
   color: rgba(232, 220, 196, 0.55);
 }
 
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(7, 20, 26, 0.72);
+  backdrop-filter: blur(8px);
+  animation: fade 220ms ease both;
+}
+
+.overlay[hidden] { display: none !important; }
+
+.card {
+  width: min(100%, 360px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  animation: pop 320ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.card-kicker {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sea);
+}
+
+.card-title {
+  margin: 0;
+  font-family: "Archivo Black", sans-serif;
+  font-size: clamp(1.8rem, 8vw, 2.4rem);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.card-body {
+  margin: 0 0 8px;
+  color: var(--sand-dim);
+  line-height: 1.45;
+  white-space: pre-line;
+}
+
 @keyframes rise {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .flag-frame, .choice { animation: none; transition: none; }
+  .flag-frame, .choice, .overlay, .card, .lives.low { animation: none; transition: none; }
 }

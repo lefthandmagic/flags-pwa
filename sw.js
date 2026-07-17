@@ -1,4 +1,4 @@
-const CACHE = "flags-pwa-v2";
+const CACHE = "flags-pwa-v3";
 const ASSETS = [
   "./",
   "./index.html",

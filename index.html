@@ -22,12 +22,14 @@
     <header class="top">
       <p class="brand">Flags</p>
       <div class="stats" aria-live="polite">
+        <span class="lives" id="lives" title="Lives">♥♥♥</span>
         <span><em id="score">0</em> score</span>
         <span><em id="streak">0</em> streak</span>
       </div>
     </header>
 
     <section class="hero" id="round">
+      <p class="meta" id="meta">0 / 0 seen</p>
       <p class="prompt" id="prompt">Which country is this?</p>
       <div class="flag-frame">
         <img id="flag" alt="Mystery flag" width="640" height="480" decoding="async" />
@@ -39,9 +41,37 @@
 
     <footer class="foot">
       <button type="button" class="ghost" id="restart">Restart</button>
-      <p class="hint">Add to Home Screen for the app feel · Safari → Share → Add to Home Screen</p>
+      <p class="hint">3 lives · no repeat flags in a session · Add to Home Screen for the app feel</p>
     </footer>
   </main>
+
+  <div class="overlay" id="celebrate" hidden>
+    <div class="card">
+      <p class="card-kicker">Streak</p>
+      <h2 class="card-title" id="celebrate-title">Nice run</h2>
+      <p class="card-body" id="celebrate-body"></p>
+      <button type="button" class="next" id="celebrate-continue">Keep going</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="gameover" hidden>
+    <div class="card">
+      <p class="card-kicker">Game over</p>
+      <h2 class="card-title">Out of lives</h2>
+      <p class="card-body" id="gameover-body"></p>
+      <button type="button" class="next" id="gameover-restart">Try again</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="cleared" hidden>
+    <div class="card">
+      <p class="card-kicker">Deck cleared</p>
+      <h2 class="card-title">You saw every flag</h2>
+      <p class="card-body" id="cleared-body"></p>
+      <button type="button" class="next" id="cleared-restart">Play again</button>
+    </div>
+  </div>
+
   <script type="module" src="./app.js"></script>
   <script>
     if ("serviceWorker" in navigator) {
