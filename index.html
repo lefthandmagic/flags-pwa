@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./styles.css?v=4" />
 </head>
 <body>
   <div class="bg" aria-hidden="true"></div>
@@ -72,11 +72,34 @@
     </div>
   </div>
 
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./app.js?v=4"></script>
   <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js").catch(() => {});
-    }
+    // Bust stuck iOS Safari / old service workers once per version.
+    (async () => {
+      const VER = "v4";
+      try {
+        if (localStorage.getItem("flags-sw-bust") === VER) {
+          if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("./sw.js?v=4").catch(() => {});
+          }
+          return;
+        }
+        if ("serviceWorker" in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.unregister()));
+        }
+        if (window.caches) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+        localStorage.setItem("flags-sw-bust", VER);
+        location.reload();
+      } catch {
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.register("./sw.js?v=4").catch(() => {});
+        }
+      }
+    })();
   </script>
 </body>
 </html>
