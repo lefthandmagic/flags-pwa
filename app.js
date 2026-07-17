@@ -20,6 +20,7 @@ const state = {
   current: null,
   answered: false,
   recent: [],
+  loadToken: 0,
 };
 
 function shuffle(arr) {
@@ -44,8 +45,42 @@ function optionsFor(correct) {
   return shuffle([correct, ...distractors]);
 }
 
-function flagUrl(code) {
-  return `https://flagcdn.com/w640/${code}.png`;
+function flagUrls(code) {
+  return [
+    `https://flagcdn.com/w320/${code}.png`,
+    `https://flagcdn.com/${code}.svg`,
+    `https://flagcdn.com/w160/${code}.png`,
+  ];
+}
+
+function loadFlag(code) {
+  const token = ++state.loadToken;
+  const urls = flagUrls(code);
+  let i = 0;
+
+  return new Promise((resolve, reject) => {
+    const tryNext = () => {
+      if (token !== state.loadToken) return;
+      if (i >= urls.length) {
+        reject(new Error("flag load failed"));
+        return;
+      }
+      const url = urls[i++];
+      const img = new Image();
+      img.decoding = "async";
+      img.onload = () => {
+        if (token !== state.loadToken) return;
+        els.flag.src = url;
+        els.flag.alt = "Mystery flag";
+        resolve(url);
+      };
+      img.onerror = () => tryNext();
+      img.src = url;
+    };
+    els.flag.removeAttribute("src");
+    els.flag.alt = "Loading flag…";
+    tryNext();
+  });
 }
 
 function renderRound() {
@@ -56,13 +91,19 @@ function renderRound() {
   els.feedback.className = "feedback";
   els.next.hidden = true;
   els.prompt.textContent = "Which country is this?";
-  els.flag.src = flagUrl(state.current.code);
-  els.flag.alt = "Mystery flag";
 
   const frame = els.flag.closest(".flag-frame");
   frame.style.animation = "none";
   void frame.offsetWidth;
   frame.style.animation = "";
+
+  loadFlag(state.current.code).catch(() => {
+    els.flag.alt = `Flag failed to load (${state.current.name})`;
+    els.feedback.hidden = false;
+    els.feedback.className = "feedback bad";
+    els.feedback.textContent = "Flag image didn’t load — tap Next to skip.";
+    els.next.hidden = false;
+  });
 
   els.choices.innerHTML = "";
   for (const opt of optionsFor(state.current)) {

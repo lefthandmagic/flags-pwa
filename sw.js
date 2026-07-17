@@ -1,4 +1,4 @@
-const CACHE = "flags-pwa-v1";
+const CACHE = "flags-pwa-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -25,20 +25,9 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
-  if (url.origin === location.origin) {
-    event.respondWith(
-      caches.match(event.request).then((cached) => cached || fetch(event.request))
-    );
-    return;
-  }
-  // Network-first for flag CDN images
+  // Only cache same-origin app shell. Never intercept flag CDN — it breaks on iOS Safari.
+  if (url.origin !== location.origin) return;
   event.respondWith(
-    fetch(event.request)
-      .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(event.request, copy)).catch(() => {});
-        return res;
-      })
-      .catch(() => caches.match(event.request))
+    caches.match(event.request).then((cached) => cached || fetch(event.request))
   );
 });
